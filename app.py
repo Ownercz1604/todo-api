@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, redirect
 import json
 import os
 
@@ -7,11 +7,9 @@ app = Flask(__name__)
 FILE = "data.json"
 
 
-# 🧠 bezpečné načítání (když soubor neexistuje nebo je prázdný)
 def load_tasks():
     if not os.path.exists(FILE):
         return []
-
     try:
         with open(FILE, "r") as f:
             return json.load(f)
@@ -24,58 +22,62 @@ def save_tasks(tasks):
         json.dump(tasks, f, indent=4)
 
 
-# 🌐 homepage
+# 🌐 HLAVNÍ STRÁNKA (UI)
 @app.route("/")
 def home():
-    return """
-    <h1>✅ To-Do API běží</h1>
-    <p>Použij:</p>
+    tasks = load_tasks()
+
+    html_tasks = ""
+    for t in tasks:
+        html_tasks += f"""
+        <li>
+            {t['title']}
+            <a href="/delete/{t['id']}" style="color:red;">❌</a>
+        </li>
+        """
+
+    return f"""
+    <h1>✅ To-Do App</h1>
+
+    <form method="POST" action="/add">
+        <input name="title" placeholder="Nový task..." required>
+        <button type="submit">Přidat</button>
+    </form>
+
+    <h3>Seznam tasků:</h3>
     <ul>
-        <li>GET /tasks</li>
-        <li>POST /tasks</li>
-        <li>DELETE /tasks/&lt;id&gt;</li>
+        {html_tasks}
     </ul>
     """
 
 
-# 📋 get tasks
-@app.route("/tasks", methods=["GET"])
-def get_tasks():
-    return jsonify(load_tasks())
-
-
-# ➕ add task
-@app.route("/tasks", methods=["POST"])
-def add_task():
+# ➕ přidání tasku z formuláře
+@app.route("/add", methods=["POST"])
+def add():
     tasks = load_tasks()
-    data = request.json
-
-    if not data or "title" not in data:
-        return jsonify({"error": "Missing title"}), 400
+    title = request.form.get("title")
 
     task = {
         "id": len(tasks) + 1,
-        "title": data["title"],
-        "done": False
+        "title": title
     }
 
     tasks.append(task)
     save_tasks(tasks)
 
-    return jsonify(task)
+    return redirect("/")
 
 
-# ❌ delete task
-@app.route("/tasks/<int:task_id>", methods=["DELETE"])
-def delete_task(task_id):
+# ❌ smazání tasku
+@app.route("/delete/<int:task_id>")
+def delete(task_id):
     tasks = load_tasks()
     tasks = [t for t in tasks if t["id"] != task_id]
     save_tasks(tasks)
 
-    return jsonify({"message": "deleted"})
+    return redirect("/")
 
 
-# 🚀 start server
 if __name__ == "__main__":
-    print("🚀 Server běží na http://127.0.0.1:5000")
-    app.run(debug=True, host="127.0.0.1", port=5000)
+    print("🚀 App běží na http://127.0.0.1:5000")
+    app.run(debug=True)
