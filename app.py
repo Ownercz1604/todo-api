@@ -22,36 +22,117 @@ def save_tasks(tasks):
         json.dump(tasks, f, indent=4)
 
 
-# 🌐 HLAVNÍ STRÁNKA (UI)
 @app.route("/")
 def home():
     tasks = load_tasks()
 
-    html_tasks = ""
+    task_items = ""
     for t in tasks:
-        html_tasks += f"""
-        <li>
-            {t['title']}
-            <a href="/delete/{t['id']}" style="color:red;">❌</a>
-        </li>
+        task_items += f"""
+        <div class="task">
+            <span>{t['title']}</span>
+            <a href="/delete/{t['id']}" class="delete">✖</a>
+        </div>
         """
 
     return f"""
-    <h1>✅ To-Do App</h1>
+    <html>
+    <head>
+        <title>To-Do App</title>
+        <style>
+            body {{
+                font-family: Arial;
+                background: #0f172a;
+                color: white;
+                display: flex;
+                justify-content: center;
+                padding-top: 50px;
+            }}
 
-    <form method="POST" action="/add">
-        <input name="title" placeholder="Nový task..." required>
-        <button type="submit">Přidat</button>
-    </form>
+            .container {{
+                width: 400px;
+                background: #111827;
+                padding: 20px;
+                border-radius: 15px;
+                box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            }}
 
-    <h3>Seznam tasků:</h3>
-    <ul>
-        {html_tasks}
-    </ul>
+            h1 {{
+                text-align: center;
+                margin-bottom: 20px;
+            }}
+
+            form {{
+                display: flex;
+                gap: 10px;
+            }}
+
+            input {{
+                flex: 1;
+                padding: 10px;
+                border-radius: 8px;
+                border: none;
+                outline: none;
+            }}
+
+            button {{
+                padding: 10px 15px;
+                border: none;
+                border-radius: 8px;
+                background: #22c55e;
+                color: white;
+                cursor: pointer;
+            }}
+
+            button:hover {{
+                background: #16a34a;
+            }}
+
+            .task {{
+                background: #1f2937;
+                padding: 10px;
+                margin-top: 10px;
+                border-radius: 10px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                transition: 0.2s;
+            }}
+
+            .task:hover {{
+                transform: scale(1.02);
+            }}
+
+            .delete {{
+                color: red;
+                text-decoration: none;
+                font-size: 18px;
+            }}
+
+            .delete:hover {{
+                color: #ff4d4d;
+            }}
+        </style>
+    </head>
+
+    <body>
+        <div class="container">
+            <h1>📝 To-Do App</h1>
+
+            <form method="POST" action="/add">
+                <input name="title" placeholder="Napiš úkol..." required>
+                <button type="submit">Přidat</button>
+            </form>
+
+            <div style="margin-top:20px;">
+                {task_items}
+            </div>
+        </div>
+    </body>
+    </html>
     """
 
 
-# ➕ přidání tasku z formuláře
 @app.route("/add", methods=["POST"])
 def add():
     tasks = load_tasks()
@@ -68,7 +149,6 @@ def add():
     return redirect("/")
 
 
-# ❌ smazání tasku
 @app.route("/delete/<int:task_id>")
 def delete(task_id):
     tasks = load_tasks()
@@ -79,5 +159,5 @@ def delete(task_id):
 
 
 if __name__ == "__main__":
-    print("🚀 App běží na http://127.0.0.1:5000")
+    print("🚀 Running on http://127.0.0.1:5000")
     app.run(debug=True)
